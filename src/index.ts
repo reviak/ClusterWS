@@ -1,9 +1,9 @@
-import * as cluster from 'cluster'
+import * as cluster from 'cluster';
 
-import {Worker} from './modules/worker'
-import {BrokerServer} from './modules/broker/server'
-import {logReady, logWarning, logError, generateKey} from './utils/functions'
-import {Configurations, Options, CustomObject, Message} from './utils/types'
+import {Worker} from './modules/worker';
+import {BrokerServer} from './modules/broker/server';
+import {logReady, logWarning, logError, generateKey} from './utils/functions';
+import {Configurations, Options, CustomObject, Message} from './utils/types';
 
 declare const process: any;
 
@@ -27,12 +27,12 @@ export default class ClusterWS {
     };
 
     if (!configurations.brokersPorts)
-      for (let i: number = 0; i < options.brokers; i++) options.brokersPorts.push(i + 9400)
+      for (let i: number = 0; i < options.brokers; i++) options.brokersPorts.push(i + 9400);
 
     if (options.brokersPorts.length < options.brokers)
       return logError('Number of the broker ports can not be less than number of brokers \n');
 
-    cluster.isMaster ? this.masterProcess(options) : this.workerProcess(options)
+    cluster.isMaster ? this.masterProcess(options) : this.workerProcess(options);
   }
 
   private masterProcess(options: Options): void {
@@ -44,7 +44,7 @@ export default class ClusterWS {
     if (options.horizontalScaleOptions && options.horizontalScaleOptions.masterOptions)
       launchProcess('Scaler', -1);
     else for (let i: number = 0; i < options.brokers; i++)
-      launchProcess('Broker', i)
+      launchProcess('Broker', i);
 
     function launchProcess(processName: string, processId: number): void {
       let newProcess: cluster.Worker = cluster.fork();
@@ -56,12 +56,12 @@ export default class ClusterWS {
         logError(`${processName} has exited \n`);
         if (options.restartWorkerOnFail) {
           logWarning(`${processName} is restarting \n`);
-          launchProcess(processName, processId)
+          launchProcess(processName, processId);
         }
-        newProcess = undefined
+        newProcess = undefined;
       });
 
-      newProcess.send({securityKey, processId, processName})
+      newProcess.send({securityKey, processId, processName});
     }
 
     function ready(processName: string, processId: number, pid: number): void {
@@ -73,20 +73,20 @@ export default class ClusterWS {
 
       if (processName === 'Scaler')
         for (let i: number = 0; i < options.brokers; i++)
-          launchProcess('Broker', i)
+          launchProcess('Broker', i);
 
       if (processName === 'Broker') {
         brokersReady[processId] = `>>>  Broker on: ${options.brokersPorts[processId]}, PID ${pid}`;
         if (Object.keys(brokersReady).length === options.brokers)
           for (let i: number = 0; i < options.workers; i++)
-            launchProcess('Worker', i)
+            launchProcess('Worker', i);
       }
 
       if (Object.keys(brokersReady).length === options.brokers && Object.keys(workersReady).length === options.workers) {
         isReady = true;
         logReady(`>>>  Master on: ${options.port}, PID: ${process.pid} ${options.tlsOptions ? ' (secure)' : ''}`);
         Object.keys(brokersReady).forEach((key: string) => brokersReady.hasOwnProperty(key) && logReady(brokersReady[key]));
-        Object.keys(workersReady).forEach((key: string) => workersReady.hasOwnProperty(key) && logReady(workersReady[key]))
+        Object.keys(workersReady).forEach((key: string) => workersReady.hasOwnProperty(key) && logReady(workersReady[key]));
       }
     }
   }
@@ -99,11 +99,11 @@ export default class ClusterWS {
         Scaler: (): void => options.horizontalScaleOptions &&
           BrokerServer(options.horizontalScaleOptions.masterOptions.port, options.horizontalScaleOptions.key || '', options.horizontalScaleOptions, 'Scaler')
       };
-      actions[message.processName] && actions[message.processName]()
+      actions[message.processName] && actions[message.processName]();
     });
     process.on('uncaughtException', (err: Error): void => {
       logError(`PID: ${process.pid}\n ${err.stack}\n`);
-      return process.exit()
-    })
+      return process.exit();
+    });
   }
 }

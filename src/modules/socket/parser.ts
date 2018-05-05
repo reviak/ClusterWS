@@ -18,10 +18,10 @@ export function encode(event: string, data: any, eventType: string): string {
 
 export function decode(socket: Socket, message: any): void {
   const actions: CustomObject = {
-    e: (): void => socket.events.emit(message['#'][1], message['#'][2]),
-    p: (): void => socket.channels[message['#'][1]] && socket.worker.wss.publish(message['#'][1], message['#'][2]),
-    s: {
-      s: (): void => {
+    emit: (): void => socket.events.emit(message.event, message.payload),
+    publish: (): void => socket.channels[message['#'][1]] && socket.worker.wss.publish(message['#'][1], message['#'][2]),
+    system: {
+      subscribe: (): void => {
         const subscribe: any = (): void => {
           socket.channels[message['#'][2]] = 1;
           socket.worker.wss.channels.onMany(message['#'][2], socket.onPublish);
@@ -29,7 +29,7 @@ export function decode(socket: Socket, message: any): void {
         !socket.worker.wss.middleware.onSubscribe ? subscribe() :
           socket.worker.wss.middleware.onSubscribe(socket, message['#'][2], (allow: boolean): void => allow && subscribe());
       },
-      u: (): void => {
+      unsubscribe: (): void => {
         socket.worker.wss.channels.removeListener(message['#'][2], socket.onPublish);
         socket.channels[message['#'][2]] = null;
       }

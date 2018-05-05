@@ -21,7 +21,7 @@ export class Socket {
     this.socket = socket;
     this.onPublish = (channel: string, message: Message): void => this.send(channel, message, 'publish');
 
-    const pingInterval: NodeJS.Timer = setInterval(
+    const pingInterval: number = setInterval(
       (): void => this.missedPing++ > 2 ? this.disconnect(4001, 'No pongs') : this.send('#0', null, 'ping'),
       this.worker.options.pingInterval);
 
@@ -34,6 +34,7 @@ export class Socket {
 
     this.socket.on('message', (message: Message): any => {
       if (typeof message !== 'string')
+        // TODO add possibility to specify decoders
         message = Buffer.from(message).toString();
 
       if (message === '#1') return this.missedPing = 0;
